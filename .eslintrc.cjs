@@ -17,6 +17,7 @@ module.exports = {
         "@stylistic/jsx-indent": ["error", 4],
         "@stylistic/jsx-indent-props": ["error", 4],
         "@stylistic/quotes": ["error", "double"],
+        "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_", destructuredArrayIgnorePattern: "^_" }],
         "import/order": ["error", {
             "alphabetize": {
                 order: "asc",

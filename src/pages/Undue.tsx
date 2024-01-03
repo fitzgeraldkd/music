@@ -1,5 +1,6 @@
 import { useContext, useEffect } from "react"
 
+import Analyzer from "../components/Analyzer"
 import AudioPlayer from "../components/AudioPlayer"
 import { AudioPlayerContext } from "../contexts/AudioPlayerContext"
 import useTitle from "../hooks/useTitle"
@@ -9,9 +10,14 @@ export default function Undue() {
     const { setSource } = useContext(AudioPlayerContext)
 
     useEffect(() => {
-        setSource(`${BUCKET_URL}misc/Undue.mp3`)
+        setSource(`${BUCKET_URL}/misc/Undue.mp3`)
     }, [])
     useTitle("Undue")
 
-    return <AudioPlayer />
+    return (
+        <>
+            <AudioPlayer />
+            <Analyzer />
+        </>
+    )
 }
