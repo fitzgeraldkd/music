@@ -16,9 +16,14 @@ interface Collection {
 
 export const songCollections: Collection[] = [
     {
-        title: "Miscellaneous Songs",
+        title: "Songs",
         path: "/misc/",
         songs: [
+            {
+                source: "misc/Dawning.mp3",
+                subpath: "dawning/",
+                title: "Dawning",
+            },
             {
                 source: "misc/Traversing+the+Tunnels.mp3",
                 subpath: "traversing-the-tunnels/",
