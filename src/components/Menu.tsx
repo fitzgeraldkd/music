@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { Fragment, useState } from "react"
 
 import QueueMusicIcon from "@mui/icons-material/QueueMusic"
 import Drawer from "@mui/material/Drawer"
@@ -11,6 +11,7 @@ import { styled } from "@mui/material/styles"
 import { type To, useNavigate } from "react-router-dom"
 
 import { MenuIconButtonStyles, MenuListStyles } from "./Menu.styles"
+import { songCollections } from "../utils/constants"
 
 const MenuIconButton = styled(IconButton)(MenuIconButtonStyles)
 const MenuList = styled(List)(MenuListStyles)
@@ -29,17 +30,20 @@ export default function Menu() {
             <MenuIconButton onClick={() => setOpen(true)}><QueueMusicIcon /></MenuIconButton>
             <Drawer open={open} onClose={() => setOpen(false)}>
                 <MenuList disablePadding>
-                    <ListItem>
-                        <ListItemText primary="Miscellaneous Songs" primaryTypographyProps={{ variant: "subtitle1" }} />
-                    </ListItem>
-                    <List className="songs-list" disablePadding>
-                        <ListItemButton onClick={() => navigateAndClose("/traversing-the-tunnels/")}>
-                            <ListItemText primary="Traversing the Tunnels" primaryTypographyProps={{ variant: "subtitle2" }} />
-                        </ListItemButton>
-                        <ListItemButton onClick={() => navigateAndClose("/undue/")}>
-                            <ListItemText primary="Undue" primaryTypographyProps={{ variant: "subtitle2" }} />
-                        </ListItemButton>
-                    </List>
+                    {songCollections.map(collection => (
+                        <Fragment key={collection.path}>
+                            <ListItem>
+                                <ListItemText primary={collection.title} primaryTypographyProps={{ variant: "subtitle1" }} />
+                            </ListItem>
+                            <List className="songs-list" disablePadding>
+                                {collection.songs.map(song => (
+                                    <ListItemButton key={song.subpath} onClick={() => navigateAndClose(collection.path + song.subpath)}>
+                                        <ListItemText primary={song.title} primaryTypographyProps={{ variant: "subtitle2" }} />
+                                    </ListItemButton>
+                                ))}
+                            </List>
+                        </Fragment>
+                    ))}
                 </MenuList>
             </Drawer>
         </>

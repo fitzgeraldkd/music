@@ -7,7 +7,7 @@ import "./index.css"
 import App from "./App"
 import Song from "./pages/Song"
 import reportWebVitals from "./reportWebVitals"
-import { AUDIO_FILE_PATHS } from "./utils/constants"
+import { songCollections } from "./utils/constants"
 
 const router = createBrowserRouter([
     {
@@ -18,14 +18,13 @@ const router = createBrowserRouter([
                 path: "/",
                 element: <Song />,
             },
-            {
-                path: "/traversing-the-tunnels/",
-                element: <Song audioPath={AUDIO_FILE_PATHS.misc.traversingTheTunnels} title="Traversing the Tunnels" />,
-            },
-            {
-                path: "/undue/",
-                element: <Song audioPath={AUDIO_FILE_PATHS.misc.undue} title="Undue" />,
-            },
+            ...songCollections.map(collection => ({
+                path: collection.path,
+                children: collection.songs.map(song => ({
+                    path: song.subpath,
+                    element: <Song audioPath={song.source} title={song.title} />,
+                })),
+            })),
         ],
     },
 ])
