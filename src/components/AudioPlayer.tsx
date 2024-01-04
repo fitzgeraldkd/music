@@ -15,7 +15,7 @@ import { AudioPlayerContext } from "../contexts/AudioPlayerContext"
 const AudioPlayerBox = styled(Box)(AudioPlayerStyles)
 
 export default function AudioPlayer() {
-    const { audio, source, status } = useContext(AudioPlayerContext)
+    const { audio, source, status, title } = useContext(AudioPlayerContext)
 
     const disabled = !audio
     const isPlaying = status === "playing"
@@ -25,10 +25,9 @@ export default function AudioPlayer() {
             <FilledIconButton backgroundColor="white" textColor="#000000" disabled={disabled} onClick={() => isPlaying ? audio?.pause() : audio?.play()}>
                 {isPlaying ? <PauseRoundedIcon /> : <PlayArrowRoundedIcon />}
             </FilledIconButton>
-            {/* TODO: Dynamically set the song title. */}
             <Box className="audio-metadata">
-                <Typography variant="subtitle2">Undue</Typography>
-                <Typography variant="body2">by Kenneth</Typography>
+                <Typography variant="subtitle2">{title}</Typography>
+                <Typography variant="body2">{title ? "by Kenneth" : null}</Typography>
             </Box>
             <IconButton href={source || ""} download={source?.split("/").reverse()[0]} disabled={disabled} sx={{ color: "white" }}>
                 <DownloadIcon />

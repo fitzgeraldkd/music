@@ -2,6 +2,8 @@ import { createContext, useEffect, useState } from "react"
 
 import { Howl, Howler } from "howler"
 
+import useTitle from "../hooks/useTitle"
+
 export type AudioPlayerStatus = "paused" | "playing" | "stopped"
 
 interface AudioPlayerContextInterface {
@@ -9,7 +11,9 @@ interface AudioPlayerContextInterface {
     audio: Howl | null
     source: string | null
     setSource: React.Dispatch<React.SetStateAction<string | null>>
+    setTitle: React.Dispatch<React.SetStateAction<string | null>>
     status: AudioPlayerStatus
+    title: string | null
 }
 
 export const AudioPlayerContext = createContext<AudioPlayerContextInterface>({} as AudioPlayerContextInterface)
@@ -23,12 +27,19 @@ export function AudioPlayerProvider({ children }: AudioPlayerProviderProps) {
     const [audio, setAudio] = useState<Howl | null>(null)
     const [source, setSource] = useState<string | null>(null)
     const [status, setStatus] = useState<AudioPlayerStatus>("stopped")
+    const [title, setTitle] = useState<string | null>(null)
+
+    useTitle(title ? `${title} - Kenneth` : undefined)
 
     useEffect(() => {
+        const initialLoad = !audio
         audio?.stop()
         if (!source) setAudio(null)
         else setAudio(new Howl({
             src: source,
+            // Most browsers should block automatic playback on initial load anyway, but make sure audio plays
+            // automatically whenever a new song is loaded.
+            autoplay: !initialLoad,
             // Some workarounds are needed to make visualizers work when using HTML5.
             // @see https://github.com/goldfire/howler.js/issues/874
             html5: false,
@@ -48,7 +59,7 @@ export function AudioPlayerProvider({ children }: AudioPlayerProviderProps) {
     }, [analyzer, Howler.ctx])
 
     return (
-        <AudioPlayerContext.Provider value={{ analyzer, audio, setSource, source, status }}>
+        <AudioPlayerContext.Provider value={{ analyzer, audio, setSource, source, status, title, setTitle }}>
             {children}
         </AudioPlayerContext.Provider>
     )

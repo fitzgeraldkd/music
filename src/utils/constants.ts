@@ -1,5 +1,6 @@
 export const AUDIO_FILE_PATHS = {
     misc: {
+        traversingTheTunnels: "misc/Traversing+the+Tunnels.mp3",
         undue: "misc/Undue.mp3",
     },
 }
