@@ -25,7 +25,7 @@ export default function AudioPlayer() {
             <FilledIconButton backgroundColor="white" textColor="#000000" disabled={disabled} onClick={() => isPlaying ? audio?.pause() : audio?.play()}>
                 {isPlaying ? <PauseRoundedIcon /> : <PlayArrowRoundedIcon />}
             </FilledIconButton>
-            <Box className="audio-metadata">
+            <Box className="audio-metadata" component="div">
                 <Typography variant="subtitle2">{title}</Typography>
                 <Typography variant="body2">{title ? "by Kenneth" : null}</Typography>
             </Box>
