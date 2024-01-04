@@ -2,7 +2,7 @@ import { type CSSObject } from "@mui/material/styles"
 
 const AudioPlayerStyles: CSSObject = {
     "alignItems": "center",
-    "backgroundColor": "#FFFFFF20",
+    "backgroundColor": "#FFFFFF18",
     "borderRadius": 100,
     "bottom": 16,
     "color": "#FF0000",
