@@ -1,42 +1,33 @@
-import { useContext } from "react"
+import { useContext, useRef } from "react"
 
 import Box from "@mui/material/Box"
 import { darken, styled } from "@mui/material/styles"
 import { OrbitControls, PerspectiveCamera } from "@react-three/drei"
-import { Canvas, type MeshProps, useThree } from "@react-three/fiber"
+import { Canvas, useThree, useFrame } from "@react-three/fiber"
+import { Mesh } from "three"
 
 import { AnalyzerBoxStyles } from "./Analyzer.styles"
 import { AudioPlayerContext } from "../contexts/AudioPlayerContext"
-import useForceUpdate from "../hooks/useForceUpdate"
 
+const FREQUENCY_BAND_COUNT = 32
 const FREQUENCY_BAR_GAP = 0
 const FREQUENCY_BAR_MAX_HEIGHT = 100
 const FREQUENCY_BAR_SIZE = 1
 const SLICE_COUNT = 25
 
-const frequencyDataHistory: number[][] = []
-
-/**
- * TODO: Refactor this loop logic to use the useFrame hook.
- */
-function useFrequencyData(analyzer: AnalyserNode, dataArray: Uint8Array, enabled: boolean) {
-    const forceUpdate = useForceUpdate()
-    analyzer.getByteFrequencyData(dataArray)
-    if (frequencyDataHistory.length >= SLICE_COUNT) {
-        frequencyDataHistory.shift()
-    }
-    frequencyDataHistory.push(Array.from(dataArray))
-    if (enabled) requestAnimationFrame(forceUpdate)
-}
+// TODO: Keeping the history is not required. Instead the slices can be updated from back to front, where each slice
+// takes the height/scale from the slice in front of it. Then the slice at the very front gets its properties from
+// getByteFrequencyData.
+const frequencyDataHistory: number[][] = [...Array(SLICE_COUNT)].map(_ => Array(FREQUENCY_BAND_COUNT).fill(0))
 
 const AnalyzerBox = styled(Box)(AnalyzerBoxStyles)
 
 export default function Analyzer() {
-    const { analyzer, status } = useContext(AudioPlayerContext)
+    const { analyzer } = useContext(AudioPlayerContext)
 
     if (!analyzer) return null
 
-    analyzer.fftSize = 64
+    analyzer.fftSize = FREQUENCY_BAND_COUNT * 2
     const bufferLength = analyzer.frequencyBinCount
     const dataArray = new Uint8Array(bufferLength)
 
@@ -46,7 +37,7 @@ export default function Analyzer() {
                 <ambientLight />
                 <pointLight intensity={500000} position={[20, FREQUENCY_BAR_MAX_HEIGHT * 1.5, 300]} />
                 <OrbitControls enableDamping enablePan enableRotate enableZoom />
-                <AnalyzerContent analyzer={analyzer} dataArray={dataArray} enabled={status === "playing"} />
+                <AnalyzerContent analyzer={analyzer} dataArray={dataArray} />
                 <PerspectiveCamera makeDefault position={[100, FREQUENCY_BAR_MAX_HEIGHT / 2, 100]} />
                 <CameraRig />
             </Canvas>
@@ -57,60 +48,52 @@ export default function Analyzer() {
 interface AnalyzerContentProps {
     analyzer: AnalyserNode
     dataArray: Uint8Array
-    enabled: boolean
-}
-
-interface FrequencyBarProps extends MeshProps {
-    color: string
-    height: number
-    size: number
 }
 
 /**
- * TODO: Instead of drawing each bar of each slice individually, it may perform better to merge the geometries of each
- * individual slice and render. The geometry could be memoized for the frames that the slice is visible, so only the
- * material changes to update the color, and the mesh's position changes.
- */
-function FrequencyBar({ color, height, size, ...props }: FrequencyBarProps) {
-    return (
-        <mesh {...props}>
-            <boxGeometry args={[size, height, size]} />
-            <meshStandardMaterial color={color} />
-        </mesh>
-    )
-}
-
-/**
- * Keep useFrequencyData as low in the hierarchy as possible to minimize how many components get rerendered each
- * animation frame.
  * TODO: The frequency bands in the data are spaced linearly. It may provide a better visualization to make this exponential.
  */
-function AnalyzerContent({ analyzer, dataArray, enabled }: AnalyzerContentProps) {
-    useFrequencyData(analyzer, dataArray, enabled)
+function AnalyzerContent({ analyzer, dataArray }: AnalyzerContentProps) {
+    const gridRef = useRef<(Mesh | null)[][]>([...Array(SLICE_COUNT)].map(_ => Array(FREQUENCY_BAND_COUNT)))
+
+    useFrame(() => {
+        analyzer.getByteFrequencyData(dataArray)
+        if (frequencyDataHistory.length >= SLICE_COUNT) {
+            frequencyDataHistory.shift()
+        }
+        frequencyDataHistory.push(Array.from(dataArray))
+        gridRef.current.map((slice, sliceIndex) => {
+            slice.map((box, boxIndex) => {
+                if (box) {
+                    const height = FREQUENCY_BAR_MAX_HEIGHT * frequencyDataHistory[sliceIndex][boxIndex] / 255
+                    box.scale.y = height
+                    box.position.y = height / 2
+                }
+            })
+        })
+    })
 
     return (
         <group position={[0, -0.5 * FREQUENCY_BAR_MAX_HEIGHT, 0]}>
             {frequencyDataHistory.map((frequencyData, groupIndex) => (
                 <group key={groupIndex} position={[0, 0, (groupIndex - frequencyDataHistory.length) * FREQUENCY_BAR_SIZE]}>
-                    {frequencyData.map((value, index) => {
-                        const height = FREQUENCY_BAR_MAX_HEIGHT * value / 255
-                        return (
-                            <FrequencyBar
-                                color={darken("#FF0000", 1 - (groupIndex / (SLICE_COUNT - 1)))}
-                                key={index}
-                                size={FREQUENCY_BAR_SIZE}
-                                height={height}
-                                position={[
-                                    (index - (dataArray.length / 2)) * (FREQUENCY_BAR_GAP + FREQUENCY_BAR_SIZE),
-                                    height / 2,
-                                    0,
-                                ]}
-                            />
-                        )
-                    })}
+                    {frequencyData.map((_, index) => (
+                        <mesh
+                            ref={ref => gridRef.current[groupIndex][index] = ref}
+                            key={index}
+                            position={[
+                                (index - (dataArray.length / 2)) * (FREQUENCY_BAR_GAP + FREQUENCY_BAR_SIZE),
+                                0,
+                                0,
+                            ]}
+                            scale={[FREQUENCY_BAR_SIZE, 0, FREQUENCY_BAR_SIZE]}
+                        >
+                            <boxGeometry args={[1, 1, 1]} />
+                            <meshStandardMaterial color={darken("#FF0000", 1 - (groupIndex / (SLICE_COUNT - 1)))} />
+                        </mesh>
+                    ))}
                 </group>
-            ),
-            )}
+            ))}
         </group>
     )
 }
