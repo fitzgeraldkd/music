@@ -15,11 +15,6 @@ const FREQUENCY_BAR_MAX_HEIGHT = 100
 const FREQUENCY_BAR_SIZE = 1
 const SLICE_COUNT = 25
 
-// TODO: Keeping the history is not required. Instead the slices can be updated from back to front, where each slice
-// takes the height/scale from the slice in front of it. Then the slice at the very front gets its properties from
-// getByteFrequencyData.
-const frequencyDataHistory: number[][] = [...Array(SLICE_COUNT)].map(_ => Array(FREQUENCY_BAND_COUNT).fill(0))
-
 const AnalyzerBox = styled(Box)(AnalyzerBoxStyles)
 
 export default function Analyzer() {
@@ -54,32 +49,39 @@ interface AnalyzerContentProps {
  * TODO: The frequency bands in the data are spaced linearly. It may provide a better visualization to make this exponential.
  */
 function AnalyzerContent({ analyzer, dataArray }: AnalyzerContentProps) {
-    const gridRef = useRef<(Mesh | null)[][]>([...Array(SLICE_COUNT)].map(_ => Array(FREQUENCY_BAND_COUNT)))
+    const gridRef = useRef<(Mesh | null)[][]>([...Array(SLICE_COUNT)].map(_ => Array(FREQUENCY_BAND_COUNT).fill(null)))
 
     useFrame(() => {
-        analyzer.getByteFrequencyData(dataArray)
-        if (frequencyDataHistory.length >= SLICE_COUNT) {
-            frequencyDataHistory.shift()
-        }
-        frequencyDataHistory.push(Array.from(dataArray))
-        gridRef.current.map((slice, sliceIndex) => {
-            slice.map((box, boxIndex) => {
-                if (box) {
-                    const height = FREQUENCY_BAR_MAX_HEIGHT * frequencyDataHistory[sliceIndex][boxIndex] / 255
-                    box.scale.y = height
-                    box.position.y = height / 2
+        // The slices behind the front slice can simply copy the data from the slice in front of it, to avoid
+        // re-calculating these values.
+        for (let sliceIndex = 0; sliceIndex < SLICE_COUNT - 1; sliceIndex++) {
+            gridRef.current[sliceIndex].map((box, boxIndex) => {
+                const neighborBox = gridRef.current[sliceIndex + 1][boxIndex]
+                if (box && neighborBox) {
+                    box.scale.y = neighborBox.scale.y
+                    box.position.y = neighborBox.position.y
                 }
             })
+        }
+
+        // The slice in front is the only one that gets brand new data.
+        analyzer.getByteFrequencyData(dataArray)
+        gridRef.current[SLICE_COUNT - 1].map((box, boxIndex) => {
+            if (box) {
+                const height = FREQUENCY_BAR_MAX_HEIGHT * dataArray[boxIndex] / 255
+                box.scale.y = height
+                box.position.y = height / 2
+            }
         })
     })
 
     return (
         <group position={[0, -0.5 * FREQUENCY_BAR_MAX_HEIGHT, 0]}>
-            {frequencyDataHistory.map((frequencyData, groupIndex) => (
-                <group key={groupIndex} position={[0, 0, (groupIndex - frequencyDataHistory.length) * FREQUENCY_BAR_SIZE]}>
-                    {frequencyData.map((_, index) => (
+            {gridRef.current.map((slice, sliceIndex) => (
+                <group key={sliceIndex} position={[0, 0, (sliceIndex - SLICE_COUNT) * FREQUENCY_BAR_SIZE]}>
+                    {slice.map((_, index) => (
                         <mesh
-                            ref={ref => gridRef.current[groupIndex][index] = ref}
+                            ref={ref => gridRef.current[sliceIndex][index] = ref}
                             key={index}
                             position={[
                                 (index - (dataArray.length / 2)) * (FREQUENCY_BAR_GAP + FREQUENCY_BAR_SIZE),
@@ -89,7 +91,7 @@ function AnalyzerContent({ analyzer, dataArray }: AnalyzerContentProps) {
                             scale={[FREQUENCY_BAR_SIZE, 0, FREQUENCY_BAR_SIZE]}
                         >
                             <boxGeometry args={[1, 1, 1]} />
-                            <meshStandardMaterial color={darken("#FF0000", 1 - (groupIndex / (SLICE_COUNT - 1)))} />
+                            <meshStandardMaterial color={darken("#FF0000", 1 - (sliceIndex / (SLICE_COUNT - 1)))} />
                         </mesh>
                     ))}
                 </group>
@@ -98,6 +100,9 @@ function AnalyzerContent({ analyzer, dataArray }: AnalyzerContentProps) {
     )
 }
 
+/**
+ * Make sure the camera is looking in the correct direction.
+ */
 function CameraRig() {
     useThree(state => state.camera.lookAt(0, FREQUENCY_BAR_MAX_HEIGHT / 2, 0))
 
