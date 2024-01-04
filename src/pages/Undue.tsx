@@ -4,13 +4,13 @@ import Analyzer from "../components/Analyzer"
 import AudioPlayer from "../components/AudioPlayer"
 import { AudioPlayerContext } from "../contexts/AudioPlayerContext"
 import useTitle from "../hooks/useTitle"
-import { BUCKET_URL } from "../utils/constants"
+import { AUDIO_FILE_PATHS, BUCKET_URL } from "../utils/constants"
 
 export default function Undue() {
     const { setSource } = useContext(AudioPlayerContext)
 
     useEffect(() => {
-        setSource(`${BUCKET_URL}/misc/Undue.mp3`)
+        setSource(`${BUCKET_URL}/${AUDIO_FILE_PATHS.misc.undue}`)
     }, [])
     useTitle("Undue")
 

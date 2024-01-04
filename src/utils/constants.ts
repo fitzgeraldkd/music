@@ -1,3 +1,9 @@
+export const AUDIO_FILE_PATHS = {
+    misc: {
+        undue: "misc/Undue.mp3",
+    },
+}
+
 // The files in this bucket are not sensitive, and there is a bucket policy to only allow access to files/folders
 // that should be publicly accessible (i.e. prevent users from accessing a song before its release date).
 // For development, read from the local public directory to allow the audio player and analyzer to work properly.
