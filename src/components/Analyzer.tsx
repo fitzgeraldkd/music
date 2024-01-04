@@ -2,8 +2,8 @@ import { useContext } from "react"
 
 import Box from "@mui/material/Box"
 import { darken, styled } from "@mui/material/styles"
-import { PerspectiveCamera } from "@react-three/drei"
-import { Canvas, useFrame, type MeshProps } from "@react-three/fiber"
+import { OrbitControls, PerspectiveCamera } from "@react-three/drei"
+import { Canvas, type MeshProps, useThree } from "@react-three/fiber"
 
 import { AnalyzerBoxStyles } from "./Analyzer.styles"
 import { AudioPlayerContext } from "../contexts/AudioPlayerContext"
@@ -45,6 +45,7 @@ export default function Analyzer() {
             <Canvas>
                 <ambientLight />
                 <pointLight intensity={500000} position={[20, FREQUENCY_BAR_MAX_HEIGHT * 1.5, 300]} />
+                <OrbitControls enableDamping enablePan enableRotate enableZoom />
                 <AnalyzerContent analyzer={analyzer} dataArray={dataArray} enabled={status === "playing"} />
                 <PerspectiveCamera makeDefault position={[100, FREQUENCY_BAR_MAX_HEIGHT / 2, 100]} />
                 <CameraRig />
@@ -88,7 +89,7 @@ function AnalyzerContent({ analyzer, dataArray, enabled }: AnalyzerContentProps)
     useFrequencyData(analyzer, dataArray, enabled)
 
     return (
-        <group position={[0, 5, 0]}>
+        <group position={[0, -0.5 * FREQUENCY_BAR_MAX_HEIGHT, 0]}>
             {frequencyDataHistory.map((frequencyData, groupIndex) => (
                 <group key={groupIndex} position={[0, 0, (groupIndex - frequencyDataHistory.length) * FREQUENCY_BAR_SIZE]}>
                     {frequencyData.map((value, index) => {
@@ -115,8 +116,7 @@ function AnalyzerContent({ analyzer, dataArray, enabled }: AnalyzerContentProps)
 }
 
 function CameraRig() {
-    useFrame((state) => {
-        state.camera.lookAt(0, FREQUENCY_BAR_MAX_HEIGHT / 2, 0)
-    })
+    useThree(state => state.camera.lookAt(0, FREQUENCY_BAR_MAX_HEIGHT / 2, 0))
+
     return null
 }
