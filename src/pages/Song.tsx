@@ -1,7 +1,7 @@
 import { useContext, useEffect } from "react"
 
-import Analyzer from "../components/Analyzer"
 import AudioPlayer from "../components/AudioPlayer"
+import Visualizer from "../components/Visualizer"
 import { AudioPlayerContext } from "../contexts/AudioPlayerContext"
 import { BUCKET_URL } from "../utils/constants"
 
@@ -28,7 +28,7 @@ export default function Song({ audioPath, title }: SongProps) {
     return (
         <>
             <AudioPlayer />
-            <Analyzer />
+            <Visualizer />
         </>
     )
 }
