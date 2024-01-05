@@ -1,4 +1,19 @@
+![K logo](/public/logo64.png)
+
 # My Personal Music Site
+
+## Running
+
+To run locally, navigate to the root directory in your terminal and run these commands:
+
+```bash
+npm i
+npm start
+```
+
+The app should open automatically in your default browser once the server is running.
+
+Note: This app was built using Node v18 and may not work with earlier versions.
 
 ## Audio Files
 
