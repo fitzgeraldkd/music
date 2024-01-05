@@ -14,6 +14,8 @@ interface Collection {
     songs: Song[]
 }
 
+// TODO: Depending on how many songs get added, and how much detail is included, it might be better to move this to a
+// proper database.
 export const songCollections: Collection[] = [
     {
         title: "Songs",
