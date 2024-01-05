@@ -6,6 +6,7 @@ import { useThree, useFrame } from "@react-three/fiber"
 import { Mesh } from "three"
 
 import { AudioPlayerContext } from "../contexts/AudioPlayerContext"
+import { redistributeFrequencyData } from "../utils/audio"
 
 const FREQUENCY_BAND_COUNT = 32
 const FREQUENCY_BAR_GAP = 0
@@ -15,7 +16,6 @@ const SLICE_COUNT = 25
 
 /**
  * A 3D frequency bar chart visualizer.
- * TODO: The frequency bands in the data are spaced linearly. It may provide a better visualization to make this exponential.
  */
 export default function FrequencyBarChart() {
     const { analyzer } = useContext(AudioPlayerContext)
@@ -24,7 +24,6 @@ export default function FrequencyBarChart() {
 
     useEffect(() => {
         if (analyzer) {
-            analyzer.fftSize = FREQUENCY_BAND_COUNT * 2
             setDataArray(new Uint8Array(analyzer.frequencyBinCount))
         }
     }, [analyzer])
@@ -48,9 +47,10 @@ export default function FrequencyBarChart() {
 
         // The slice in front is the only one that gets brand new data.
         analyzer.getByteFrequencyData(dataArray)
+        const logarithmicData = redistributeFrequencyData(dataArray, analyzer.context.sampleRate, FREQUENCY_BAND_COUNT)
         gridRef.current[SLICE_COUNT - 1].map((box, boxIndex) => {
             if (box) {
-                const height = FREQUENCY_BAR_MAX_HEIGHT * dataArray[boxIndex] / 255
+                const height = FREQUENCY_BAR_MAX_HEIGHT * logarithmicData[boxIndex] / 255
                 box.scale.y = height
                 box.position.y = height / 2
             }
